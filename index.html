@@ -336,19 +336,26 @@
         <!-- Section Livre d'Or -->
         <div class="guestbook">
             <h2>Livre d'Or ✍️</h2>
-            <div class="form-group">
-                <input type="text" id="pseudoInput" class="form-control" placeholder="Ton Nom / Pseudo">
-            </div>
-            <div class="form-group">
-                <textarea id="messageInput" class="form-control" rows="3"
-                    placeholder="Ton vœu pour le boss..."></textarea>
-            </div>
-            <button class="btn" style="width: 100%; padding: 10px; font-size: 1rem;" onclick="ajouterVoeu()">Envoyer le
-                vœu 🚀</button>
+            <form action="https://formsubmit.co/charleskamga27@gmail.com" method="POST" id="voeuForm">
+                <!-- Configuration FormSubmit -->
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_subject" value="Nouveau vœu pour l'anniversaire !">
+                <input type="hidden" name="_template" value="table">
+                <!-- Redirection désactivée pour gérer en JS (ou redirection vers une page de merci) -->
+                <!-- On va utiliser fetch pour ne pas recharger la page -->
 
-            <div class="messages-list" id="messagesList" style="display: none;">
-                <!-- Les messages sont cachés par défaut -->
-            </div>
+                <div class="form-group">
+                    <input type="text" name="pseudo" id="pseudoInput" class="form-control"
+                        placeholder="Ton Nom / Pseudo" required>
+                </div>
+                <div class="form-group">
+                    <textarea name="message" id="messageInput" class="form-control" rows="3"
+                        placeholder="Ton vœu pour le boss..." required></textarea>
+                </div>
+                <button type="submit" class="btn" style="width: 100%; padding: 10px; font-size: 1rem;">Envoyer le vœu
+                    🚀</button>
+            </form>
+
             <div id="confirmationMessage" style="display: none; color: #4caf50; margin-top: 15px; font-weight: bold;">
                 Message envoyé avec succès ! Merci ! 📨
             </div>
@@ -410,16 +417,17 @@
                 spread: 70,
                 origin: { y: 0.6 }
             });
-
-            // Charger les messages sauvegardés (si on veut persister localement)
-            // chargerVoeux(); // DÉSACTIVÉ POUR CONFIDENTIALITÉ
         };
 
-        // Fonction pour ajouter un vœu
-        function ajouterVoeu() {
+        // Gestion du formulaire avec Fetch pour éviter le rechargement de page
+        const form = document.getElementById('voeuForm');
+        form.addEventListener('submit', function (e) {
+            e.preventDefault(); // Empêcher l'envoi classique
+
             const pseudoInput = document.getElementById('pseudoInput');
             const messageInput = document.getElementById('messageInput');
             const confirmation = document.getElementById('confirmationMessage');
+            const btn = form.querySelector('button');
 
             const pseudo = pseudoInput.value.trim();
             const message = messageInput.value.trim();
@@ -429,46 +437,45 @@
                 return;
             }
 
-            // Créer l'objet message
-            const voeu = { pseudo, message, date: new Date() };
+            // Désactiver le bouton pendant l'envoi
+            btn.disabled = true;
+            btn.innerText = "Envoi en cours...";
 
-            // Sauvegarder dans le localStorage
-            sauvegarderMessage(voeu);
+            // Envoi via Fetch
+            fetch("https://formsubmit.co/ajax/charleskamga27@gmail.com", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    pseudo: pseudo,
+                    message: message
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Succès
+                    pseudoInput.value = "";
+                    messageInput.value = "";
 
-            // Reset des inputs
-            pseudoInput.value = "";
-            messageInput.value = "";
+                    confirmation.style.display = 'block';
+                    setTimeout(() => {
+                        confirmation.style.display = 'none';
+                    }, 5000);
 
-            // Afficher confirmation
-            confirmation.style.display = 'block';
-            setTimeout(() => {
-                confirmation.style.display = 'none';
-            }, 3000);
-
-            // Petit effet confetti juste pour le plaisir
-            confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
-        }
-
-        function afficherMessage(voeu) {
-            const list = document.getElementById('messagesList');
-            // S'assurer que la liste est visible si on appelle cette fonction (mode admin)
-            list.style.display = 'block';
-
-            const card = document.createElement('div');
-            card.className = 'message-card';
-            card.innerHTML = `
-                <div class="message-author">${voeu.pseudo}</div>
-                <div class="message-text">${voeu.message}</div>
-            `;
-            // Ajouter en haut de la liste
-            list.insertBefore(card, list.firstChild);
-        }
-
-        function sauvegarderMessage(voeu) {
-            let messages = JSON.parse(localStorage.getItem('hbd_messages')) || [];
-            messages.push(voeu);
-            localStorage.setItem('hbd_messages', JSON.stringify(messages));
-        }
+                    // Confettis
+                    confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert("Oups, une erreur s'est produite lors de l'envoi. Réessaie !");
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerText = "Envoyer le vœu 🚀";
+                });
+        });
 
 
     </script>
