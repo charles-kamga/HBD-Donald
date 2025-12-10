@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - HBD Donald</title>
+    <!-- Police Google Font stylée -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #ffcc00;
+            --secondary: #ff0055;
+            --dark: #121212;
+            --text: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--dark);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 30px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        /* Login Section */
+        #loginSection {
+            text-align: center;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: var(--dark);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .error-msg {
+            color: var(--secondary);
+            margin-top: 15px;
+            font-weight: bold;
+            display: none;
+        }
+
+        /* Dashboard Section */
+        #dashboardSection {
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            color: var(--primary);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .empty-msg {
+            text-align: center;
+            margin-top: 30px;
+            color: #aaa;
+            font-style: italic;
+        }
+
+        .date-col {
+            color: #888;
+            font-size: 0.8rem;
+            width: 150px;
+        }
+
+        .pseudo-col {
+            font-weight: bold;
+            color: var(--secondary);
+            width: 150px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Espace Admin 🕵️‍♂️</h1>
+
+        <!-- Login Section -->
+        <div id="loginSection">
+            <p style="margin-bottom: 20px;">Veuillez entrer le mot de passe administrateur.</p>
+            <input type="password" id="passwordInput" class="form-control" placeholder="Mot de passe...">
+            <button class="btn" onclick="checkPassword()">Accéder aux vœux</button>
+            <div id="errorMsg" class="error-msg">Mot de passe incorrect ! 🚫</div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Liste des Vœux</h2>
+                <button class="btn" style="padding: 10px 20px; font-size: 0.9rem; background: #333; color: #fff;"
+                    onclick="logout()">Déconnexion</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Pseudo</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody id="messagesTableBody">
+                    <!-- Les messages seront injectés ici -->
+                </tbody>
+            </table>
+            <div id="emptyMsg" class="empty-msg" style="display: none;">Aucun vœu pour le moment...</div>
+        </div>
+    </div>
+
+    <script>
+        const PASSWORD = "sudo charles let-me-see";
+
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (input.value === PASSWORD) {
+                // Succès
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('dashboardSection').style.display = 'block';
+                loadMessages();
+            } else {
+                // Erreur
+                errorMsg.style.display = 'block';
+                input.value = "";
+                input.focus();
+            }
+        }
+
+        // Permettre la validation avec la touche Entrée
+        document.getElementById('passwordInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        function loadMessages() {
+            const tbody = document.getElementById('messagesTableBody');
+            const emptyMsg = document.getElementById('emptyMsg');
+            tbody.innerHTML = "";
+
+            let messages = JSON.parse(localStorage.getItem('hbd_messages')) || [];
+
+            if (messages.length === 0) {
+                emptyMsg.style.display = 'block';
+                return;
+            } else {
+                emptyMsg.style.display = 'none';
+            }
+
+            // Trier par date décroissante (le plus récent en haut)
+            messages.reverse().forEach(msg => {
+                const tr = document.createElement('tr');
+
+                // Formater la date
+                const date = new Date(msg.date);
+                const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                tr.innerHTML = `
+                    <td class="date-col">${dateStr}</td>
+                    <td class="pseudo-col">${msg.pseudo}</td>
+                    <td>${msg.message}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function logout() {
+            document.getElementById('dashboardSection').style.display = 'none';
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('passwordInput').value = "";
+            document.getElementById('errorMsg').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>
