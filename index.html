@@ -441,43 +441,40 @@
             btn.disabled = true;
             btn.innerText = "Envoi en cours...";
 
-            // Envoi via FormSubmit
-            fetch("https://formsubmit.co/ajax/charleskamga27@gmail.com", {
+            // Remplacer la partie fetch existante (lignes 444-480) par :
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfGwiQtqWn0Lempj2mvMv6FMZ-e7myUXTYDUiVRC_QVFyPza4dnkp4m06l2oYSR5d4/exec"; // À remplacer
+
+            fetch(GOOGLE_SCRIPT_URL, {
                 method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     pseudo: pseudo,
-                    message: message,
-                    _subject: "Nouveau vœu pour l'anniversaire !",
-                    _template: "table",
-                    _captcha: "false"
+                    message: message
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                // Succès
-                pseudoInput.value = "";
-                messageInput.value = "";
-
-                confirmation.style.display = 'block';
-                setTimeout(() => {
-                    confirmation.style.display = 'none';
-                }, 5000);
-
-                // Confettis
-                confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                alert("Oups, une erreur s'est produite lors de l'envoi. Réessaie !");
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerText = "Envoyer le vœu 🚀";
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Succès
+                        pseudoInput.value = "";
+                        messageInput.value = "";
+                        confirmation.style.display = 'block';
+                        setTimeout(() => {
+                            confirmation.style.display = 'none';
+                        }, 5000);
+                        confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
+                    } else {
+                        throw new Error(data.error || "Erreur inconnue");
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert("Oups, une erreur s'est produite lors de l'envoi. Réessaie !");
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerText = "Envoyer le vœu 🚀";
+                });
         });
 
 
@@ -488,9 +485,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
     <script src="firebase-config.js"></script>
     <script>
-      // Initialiser Firebase
-      const app = firebase.initializeApp(firebaseConfig);
-      const db = firebase.firestore();
+        // Initialiser Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
     </script>
 </body>
 
