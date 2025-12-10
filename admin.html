@@ -164,10 +164,11 @@
 
         <!-- Login Section -->
         <div id="loginSection">
-            <p style="margin-bottom: 20px;">Veuillez entrer le mot de passe administrateur.</p>
-            <input type="password" id="passwordInput" class="form-control" placeholder="Mot de passe...">
-            <button class="btn" onclick="checkPassword()">Accéder aux vœux</button>
-            <div id="errorMsg" class="error-msg">Mot de passe incorrect ! 🚫</div>
+            <p style="margin-bottom: 20px;">Veuillez vous connecter pour voir les messages.</p>
+            <input type="email" id="emailInput" class="form-control" placeholder="Email">
+            <input type="password" id="passwordInput" class="form-control" placeholder="Mot de passe">
+            <button class="btn" onclick="login()">Connexion</button>
+            <div id="errorMsg" class="error-msg">Email ou mot de passe incorrect.</div>
         </div>
 
         <!-- Dashboard Section -->
@@ -195,29 +196,41 @@
     </div>
 
     <script>
-        const PASSWORD = "sudo charles let-me-see";
+        const auth = firebase.auth();
 
-        function checkPassword() {
-            const input = document.getElementById('passwordInput');
-            const errorMsg = document.getElementById('errorMsg');
-
-            if (input.value === PASSWORD) {
-                // Succès
+        // Vérifier l'état de connexion au chargement
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // L'utilisateur est connecté
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('dashboardSection').style.display = 'block';
                 loadMessages();
             } else {
-                // Erreur
-                errorMsg.style.display = 'block';
-                input.value = "";
-                input.focus();
+                // L'utilisateur est déconnecté
+                document.getElementById('dashboardSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
             }
+        });
+
+        function login() {
+            const emailInput = document.getElementById('emailInput');
+            const passwordInput = document.getElementById('passwordInput');
+            const errorMsg = document.getElementById('errorMsg');
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    console.error('Erreur de connexion:', error);
+                    errorMsg.style.display = 'block';
+                });
         }
 
         // Permettre la validation avec la touche Entrée
         document.getElementById('passwordInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
-                checkPassword();
+                login();
             }
         });
 
@@ -226,38 +239,49 @@
             const emptyMsg = document.getElementById('emptyMsg');
             tbody.innerHTML = "";
 
-            let messages = JSON.parse(localStorage.getItem('hbd_messages')) || [];
+            db.collection("messages").orderBy("date", "desc").get().then((querySnapshot) => {
+                if (querySnapshot.empty) {
+                    emptyMsg.style.display = 'block';
+                    return;
+                } else {
+                    emptyMsg.style.display = 'none';
+                }
 
-            if (messages.length === 0) {
-                emptyMsg.style.display = 'block';
-                return;
-            } else {
-                emptyMsg.style.display = 'none';
-            }
+                querySnapshot.forEach((doc) => {
+                    const msg = doc.data();
+                    const tr = document.createElement('tr');
 
-            // Trier par date décroissante (le plus récent en haut)
-            messages.reverse().forEach(msg => {
-                const tr = document.createElement('tr');
+                    // Formater la date
+                    const date = msg.date.toDate(); // Convertir le timestamp Firestore en Date JS
+                    const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                // Formater la date
-                const date = new Date(msg.date);
-                const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                tr.innerHTML = `
-                    <td class="date-col">${dateStr}</td>
-                    <td class="pseudo-col">${msg.pseudo}</td>
-                    <td>${msg.message}</td>
-                `;
-                tbody.appendChild(tr);
+                    tr.innerHTML = `
+                        <td class="date-col">${dateStr}</td>
+                        <td class="pseudo-col">${msg.pseudo}</td>
+                        <td>${msg.message}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }).catch(error => {
+                console.error("Erreur lors de la récupération des messages: ", error);
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--secondary);">Erreur de chargement des messages.</td></tr>';
             });
         }
 
         function logout() {
-            document.getElementById('dashboardSection').style.display = 'none';
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('passwordInput').value = "";
-            document.getElementById('errorMsg').style.display = 'none';
+            auth.signOut();
         }
+    </script>
+
+    <!-- Scripts Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+      // Initialiser Firebase
+      const app = firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
     </script>
 </body>
 
