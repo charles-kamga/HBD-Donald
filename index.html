@@ -441,13 +441,23 @@
             btn.disabled = true;
             btn.innerText = "Envoi en cours...";
 
-            // Envoi vers Firestore
-            db.collection("messages").add({
-                pseudo: pseudo,
-                message: message,
-                date: new Date()
+            // Envoi via FormSubmit
+            fetch("https://formsubmit.co/ajax/charleskamga27@gmail.com", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    pseudo: pseudo,
+                    message: message,
+                    _subject: "Nouveau vœu pour l'anniversaire !",
+                    _template: "table",
+                    _captcha: "false"
+                })
             })
-            .then(() => {
+            .then(response => response.json())
+            .then(data => {
                 // Succès
                 pseudoInput.value = "";
                 messageInput.value = "";
@@ -461,7 +471,7 @@
                 confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
             })
             .catch(error => {
-                console.error("Erreur lors de l'ajout du document: ", error);
+                console.error('Erreur:', error);
                 alert("Oups, une erreur s'est produite lors de l'envoi. Réessaie !");
             })
             .finally(() => {
